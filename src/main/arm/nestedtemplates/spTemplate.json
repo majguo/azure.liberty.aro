@@ -1,0 +1,227 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "identity": {
+            "type": "object",
+            "metadata": {
+                "description": "User-assigned managed identity granted with contributor role of the same subscription"
+            }
+        },
+        "aadClientId": {
+            "type": "string",
+            "metadata": {
+                "description": "The Application ID of an Azure Active Directory client application"
+            }
+        },
+        "aadClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The secret of an Azure Active Directory client application"
+            }
+        },
+        "aadObjectId": {
+            "type": "string",
+            "metadata": {
+                "description": "The Object ID of an Azure Active Directory client application"
+            }
+        },
+        "rpObjectId": {
+            "type": "String",
+            "metadata": {
+                "description": "The Object ID of the Resource Provider Service Principal"
+            }
+        },
+        "guidValue": {
+            "type": "string",
+            "metadata": {
+                "description": "The value returned from function newGuid()"
+            }
+        }
+    },
+    "variables": {
+        "const_aadClientIdKey": "AAD-CLIENT-ID",
+        "const_aadClientSecretKey": "AAD-CLIENT-SECRET",
+        "const_aadObjectIdKey": "AAD-OBJECT-ID",
+        "const_rpObjectIdKey": "RP-OBJECT-ID",
+        "const_toBeUpdated": "TO-BE-UPDATED",
+        "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
+        "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
+        "name_keyVault": "[concat('keyvault', variables('const_suffix'))]",
+        "name_spDeploymentScript": "[concat('spScript', variables('const_suffix'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "${azure.apiVersion}",
+            "name": "${aro.sp.start}",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "${azure.apiVersion.keyVault}",
+            "name": "[variables('name_keyVault')]",
+            "location": "[parameters('location')]",
+            "type": "Microsoft.KeyVault/vaults",
+            "properties": {
+                "enabledForTemplateDeployment": true,
+                "sku": {
+                    "name": "Standard",
+                    "family": "A"
+                },
+                "accessPolicies": [],
+                "tenantId": "[subscription().tenantId]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "${azure.apiVersion.keyVault}",
+                    "name": "[variables('const_aadClientIdKey')]",
+                    "type": "secrets",
+                    "properties": {
+                        "value": "[if(empty(parameters('aadClientId')), variables('const_toBeUpdated'), parameters('aadClientId'))]"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
+                    ]
+                },
+                {
+                    "apiVersion": "${azure.apiVersion.keyVault}",
+                    "name": "[variables('const_aadClientSecretKey')]",
+                    "type": "secrets",
+                    "properties": {
+                        "value": "[if(empty(parameters('aadClientSecret')), variables('const_toBeUpdated'), parameters('aadClientSecret'))]"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
+                    ]
+                },
+                {
+                    "apiVersion": "${azure.apiVersion.keyVault}",
+                    "name": "[variables('const_aadObjectIdKey')]",
+                    "type": "secrets",
+                    "properties": {
+                        "value": "[if(empty(parameters('aadObjectId')), variables('const_toBeUpdated'), parameters('aadObjectId'))]"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
+                    ]
+                },
+                {
+                    "apiVersion": "${azure.apiVersion.keyVault}",
+                    "name": "[variables('const_rpObjectIdKey')]",
+                    "type": "secrets",
+                    "properties": {
+                        "value": "[if(empty(parameters('rpObjectId')), variables('const_toBeUpdated'), parameters('rpObjectId'))]"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": "[or(empty(parameters('aadClientId')), empty(parameters('aadClientSecret')), empty(parameters('aadObjectId')), empty(parameters('rpObjectId')))]",
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "${azure.apiVersion.deploymentScript}",
+            "name": "[variables('name_spDeploymentScript')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
+            ],
+            "location": "[parameters('location')]",
+            "kind": "AzureCLI",
+            "identity": "[parameters('identity')]",
+            "properties": {
+                "AzCliVersion": "2.15.0",
+                "environmentVariables": [
+                    {
+                        "name": "KEY_VAULT_NAME",
+                        "value": "[variables('name_keyVault')]"
+                    },
+                    {
+                        "name": "AAD_CLIENT_ID",
+                        "value": "[variables('const_aadClientIdKey')]"
+                    },
+                    {
+                        "name": "AAD_CLIENT_SECRET",
+                        "value": "[variables('const_aadClientSecretKey')]"
+                    },
+                    {
+                        "name": "AAD_OBJECT_ID",
+                        "value": "[variables('const_aadObjectIdKey')]"
+                    },
+                    {
+                        "name": "RP_OBJECT_ID",
+                        "value": "[variables('const_rpObjectIdKey')]"
+                    }
+                ],
+                "primaryScriptUri": "[uri(variables('const_scriptLocation'), concat('create-sp.sh', parameters('_artifactsLocationSasToken')))]",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "${azure.apiVersion}",
+            "name": "${aro.sp.end}",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deploymentScripts', variables('name_spDeploymentScript'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "keyVaultName": {
+            "value": "[variables('name_keyVault')]",
+            "type": "string"
+        },
+        "aadClientIdKey": {
+            "value": "[variables('const_aadClientIdKey')]",
+            "type": "string"
+        },
+        "aadClientSecretKey": {
+            "value": "[variables('const_aadClientSecretKey')]",
+            "type": "string"
+        },
+        "aadObjectIdKey": {
+            "value": "[variables('const_aadObjectIdKey')]",
+            "type": "string"
+        },
+        "rpObjectIdKey": {
+            "value": "[variables('const_rpObjectIdKey')]",
+            "type": "string"
+        }
+    }
+}
