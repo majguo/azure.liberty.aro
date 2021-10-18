@@ -26,6 +26,12 @@
                 "description": "User-assigned managed identity granted with contributor role of the same subscription"
             }
         },
+        "createCluster": {
+            "type": "bool",
+            "metadata": {
+                "description": "Flag indicating whether to create a new cluster or not"
+            }
+        },
         "aadClientId": {
             "type": "string",
             "metadata": {
@@ -61,8 +67,8 @@
         "const_aadClientIdKey": "AAD-CLIENT-ID",
         "const_aadClientSecretKey": "AAD-CLIENT-SECRET",
         "const_aadObjectIdKey": "AAD-OBJECT-ID",
+        "const_nullValue": "NULL",
         "const_rpObjectIdKey": "RP-OBJECT-ID",
-        "const_toBeUpdated": "TO-BE-UPDATED",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
         "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
         "name_keyVault": "[concat('keyvault', variables('const_suffix'))]",
@@ -103,7 +109,7 @@
                     "name": "[variables('const_aadClientIdKey')]",
                     "type": "secrets",
                     "properties": {
-                        "value": "[if(empty(parameters('aadClientId')), variables('const_toBeUpdated'), parameters('aadClientId'))]"
+                        "value": "[if(empty(parameters('aadClientId')), variables('const_nullValue'), parameters('aadClientId'))]"
                     },
                     "dependsOn": [
                         "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
@@ -114,7 +120,7 @@
                     "name": "[variables('const_aadClientSecretKey')]",
                     "type": "secrets",
                     "properties": {
-                        "value": "[if(empty(parameters('aadClientSecret')), variables('const_toBeUpdated'), parameters('aadClientSecret'))]"
+                        "value": "[if(empty(parameters('aadClientSecret')), variables('const_nullValue'), parameters('aadClientSecret'))]"
                     },
                     "dependsOn": [
                         "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
@@ -125,7 +131,7 @@
                     "name": "[variables('const_aadObjectIdKey')]",
                     "type": "secrets",
                     "properties": {
-                        "value": "[if(empty(parameters('aadObjectId')), variables('const_toBeUpdated'), parameters('aadObjectId'))]"
+                        "value": "[if(empty(parameters('aadObjectId')), variables('const_nullValue'), parameters('aadObjectId'))]"
                     },
                     "dependsOn": [
                         "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
@@ -136,7 +142,7 @@
                     "name": "[variables('const_rpObjectIdKey')]",
                     "type": "secrets",
                     "properties": {
-                        "value": "[if(empty(parameters('rpObjectId')), variables('const_toBeUpdated'), parameters('rpObjectId'))]"
+                        "value": "[if(empty(parameters('rpObjectId')), variables('const_nullValue'), parameters('rpObjectId'))]"
                     },
                     "dependsOn": [
                         "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
@@ -145,7 +151,7 @@
             ]
         },
         {
-            "condition": "[or(empty(parameters('aadClientId')), empty(parameters('aadClientSecret')), empty(parameters('aadObjectId')), empty(parameters('rpObjectId')))]",
+            "condition": "[and(parameters('createCluster'), or(empty(parameters('aadClientId')), empty(parameters('aadClientSecret')), empty(parameters('aadObjectId')), empty(parameters('rpObjectId'))))]",
             "type": "Microsoft.Resources/deploymentScripts",
             "apiVersion": "${azure.apiVersion.deploymentScript}",
             "name": "[variables('name_spDeploymentScript')]",
