@@ -15,15 +15,22 @@
 #  limitations under the License.
 
 # Create service principal
-sp=$(az ad sp create-for-rbac --sdk-auth)
+displayName=create-sp-$(date '+%Y-%m-%d-%H-%M-%S')
+appClientSecret=$(cat /proc/sys/kernel/random/uuid)
+app=$(az ad app create --display-name ${displayName} --password ${appClientSecret})
 if [[ $? != 0 ]]; then
-  echo "Failed to create a service principal." >&2
+  echo "Failed to register application ${displayName}." >&2
   exit 1
 fi
-appClientId=$(echo $sp | jq -r '.clientId')
-appClientSecret=$(echo $sp | jq -r '.clientSecret')
+appClientId=$(echo $app | jq -r '.appId')
+objectId=$(echo $app | jq -r '.objectId')
+az ad sp create --id ${objectId}
+if [[ $? != 0 ]]; then
+  echo "Failed to create service principal for object id ${objectId}." >&2
+  exit 1
+fi
 
-# Get object IDs
+# Get service principal object IDs
 appSpObjectId=$(az ad sp show --id ${appClientId} --query 'objectId' -o tsv)
 if [[ $? != 0 ]]; then
   echo "Failed to get objectId for ${appClientId}." >&2
