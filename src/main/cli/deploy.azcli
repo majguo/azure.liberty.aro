@@ -218,6 +218,41 @@ else
 	echo "Using existing storage blob..."
 fi
 
+# Upload nested templates to storage container
+spTemplateFilePath="../arm/nestedtemplates/spTemplate.json"
+spTemplate=$(basename "$spTemplateFilePath")
+if [[ $( az storage blob exists -n "$spTemplate" -c "$storageContainerName" --account-name "$storageAccountName" --account-key "$storageAccountKey" -o json | jq '.exists') = true ]]; then
+    echo "Storage blob with name ${spTemplate} already existed. Deleting it..."
+	set -e
+	(
+		set -x
+		az storage blob delete -c $storageContainerName -n "$spTemplate" --account-name "$storageAccountName" --account-key "$storageAccountKey"
+	)
+fi
+echo "Creating blob with name ${spTemplate}..."
+set -e
+(
+    set -x
+    az storage blob upload -f "$spTemplateFilePath" -c $storageContainerName -n "$spTemplate" --account-name "$storageAccountName" --account-key "$storageAccountKey"
+)
+
+aroTemplateFilePath="../arm/nestedtemplates/aroTemplate.json"
+aroTemplate=$(basename "$aroTemplateFilePath")
+if [[ $( az storage blob exists -n "$aroTemplate" -c "$storageContainerName" --account-name "$storageAccountName" --account-key "$storageAccountKey" -o json | jq '.exists') = true ]]; then
+    echo "Storage blob with name ${aroTemplate} already existed. Deleting it..."
+	set -e
+	(
+		set -x
+		az storage blob delete -c $storageContainerName -n "$aroTemplate" --account-name "$storageAccountName" --account-key "$storageAccountKey"
+	)
+fi
+echo "Creating blob with name ${aroTemplate}..."
+set -e
+(
+    set -x
+    az storage blob upload -f "$aroTemplateFilePath" -c $storageContainerName -n "$aroTemplate" --account-name "$storageAccountName" --account-key "$storageAccountKey"
+)
+
 set +u
 
 # Get a 4-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
@@ -227,6 +262,8 @@ plusFourHoursUtc=$(date -u -v+4H +%Y-%m-%dT%H:%MZ 2>/dev/null)  || plusFourHours
 sasToken=$( az storage container generate-sas -n "$storageContainerName" --permissions r --expiry "$plusFourHoursUtc" --account-name "$storageAccountName" --account-key "$storageAccountKey" -o json | sed 's/"//g')
 blobEndpoint=$( az storage account show -n "$storageAccountName" -g "$storageAccountRGName" -o json | jq -r '.primaryEndpoints.blob' )
 appPackageUrl=$blobEndpoint$storageContainerName/"$fileName"?$sasToken
+spTemplateLink=$blobEndpoint$storageContainerName/"$spTemplate"?$sasToken
+aroTemplateLink=$blobEndpoint$storageContainerName/"$aroTemplate"?$sasToken
 
 # Read pull secret
 if [ -f "$pullSecretFile" ]; then
@@ -253,6 +290,8 @@ parametersJson=$( echo "$parametersJson" | jq --arg aadClientId "$aadClientId" '
 parametersJson=$( echo "$parametersJson" | jq --arg aadClientSecret "$aadClientSecret" '{"aadClientSecret": {"value":$aadClientSecret}} + .' )
 parametersJson=$( echo "$parametersJson" | jq --arg aadObjectId "$aadObjectId" '{"aadObjectId": {"value":$aadObjectId}} + .' )
 parametersJson=$( echo "$parametersJson" | jq --arg rpObjectId "$rpObjectId" '{"rpObjectId": {"value":$rpObjectId}} + .' )
+parametersJson=$( echo "$parametersJson" | jq --arg spTemplateLink "$spTemplateLink" '{"spTemplateLink": {"value":$spTemplateLink}} + .' )
+parametersJson=$( echo "$parametersJson" | jq --arg aroTemplateLink "$aroTemplateLink" '{"aroTemplateLink": {"value":$aroTemplateLink}} + .' )
 parametersJson=$( echo "$parametersJson" | jq -c '.' )
 
 # Start deployment
