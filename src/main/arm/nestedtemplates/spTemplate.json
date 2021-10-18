@@ -156,7 +156,10 @@
             "apiVersion": "${azure.apiVersion.deploymentScript}",
             "name": "[variables('name_spDeploymentScript')]",
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', variables('name_keyVault'))]"
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('name_keyVault'), variables('const_aadClientIdKey'))]",
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('name_keyVault'), variables('const_aadClientSecretKey'))]",
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('name_keyVault'), variables('const_aadObjectIdKey'))]",
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('name_keyVault'), variables('const_rpObjectIdKey'))]"
             ],
             "location": "[parameters('location')]",
             "kind": "AzureCLI",

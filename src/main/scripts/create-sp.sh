@@ -35,6 +35,14 @@ if [[ $? != 0 ]]; then
   exit 1
 fi
 
+# Add access policy for the uami associated with the deployment script
+principalId=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "principalId" -o tsv)
+az keyvault set-policy --name ${KEY_VAULT_NAME} --object-id ${principalId} --secret-permissions set
+if [[ $? != 0 ]]; then
+  echo "Failed to add access policy for the keyvault ${KEY_VAULT_NAME}." >&2
+  exit 1
+fi
+
 # Set values for secrets in the keyvault
 az keyvault secret set --vault-name ${KEY_VAULT_NAME} --name ${AAD_CLIENT_ID} --value ${appClientId}
 if [[ $? != 0 ]]; then
@@ -56,3 +64,6 @@ if [[ $? != 0 ]]; then
   echo "Failed to set value for secret ${RP_OBJECT_ID} in the keyvault ${KEY_VAULT_NAME}." >&2
   exit 1
 fi
+
+# Remove the previous added access poliy
+az keyvault delete-policy --name ${KEY_VAULT_NAME} --object-id ${principalId}
