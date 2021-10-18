@@ -134,30 +134,29 @@
                 "description": "The number of application replicas to deploy"
             }
         },
-        "guidValue": {
+        "guidSuffix": {
             "type": "string",
             "metadata": {
-                "description": "The value returned from function newGuid()"
+                "description": "The suffix of GUID"
             }
         }
     },
     "variables": {
         "const_appImage": "[concat(variables('const_appImageName'), ':', variables('const_appImageTag'))]",
-        "const_appImageName": "[concat('image', variables('const_suffix'))]",
+        "const_appImageName": "[concat('image', parameters('guidSuffix'))]",
         "const_appImageTag": "1.0.0",
-        "const_appName": "[concat('app', variables('const_suffix'))]",
+        "const_appName": "[concat('app', parameters('guidSuffix'))]",
         "const_appPackageUrl": "[if(parameters('uploadAppPackage'), parameters('appPackageUrl'), 'N/A')]",
-        "const_appProjName": "[concat('project', variables('const_suffix'))]",
+        "const_appProjName": "[concat('project', parameters('guidSuffix'))]",
         "const_arguments1": "[concat(variables('const_clusterRGName'), ' ', variables('name_clusterName'), ' ', parameters('projMgrUsername'), ' ', parameters('projMgrPassword'), ' ', variables('const_scriptLocation'), ' ', parameters('uploadAppPackage'), ' ', variables('const_appPackageUrl'))]",
         "const_arguments2": "[concat(' ', parameters('contextRoot'), ' ', parameters('useOpenLibertyImage'), ' ', parameters('useJava8'), ' ', variables('const_appName'), ' ', variables('const_appProjName'), ' ', variables('const_appImage'), ' ', parameters('appReplicas'))]",
-        "const_clusterDomainName": "[concat('domain', variables('const_suffix'))]",
+        "const_clusterDomainName": "[concat('domain', parameters('guidSuffix'))]",
         "const_clusterRGName": "[if(parameters('createCluster'), resourceGroup().name, parameters('clusterRGName'))]",
         "const_contribRole": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
-        "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
-        "name_clusterName": "[if(parameters('createCluster'), concat('cluster', variables('const_suffix')), parameters('clusterName'))]",
-        "name_clusterVNetName": "[concat('vnet', variables('const_suffix'))]",
-        "name_deploymentScriptName": "[concat('script', variables('const_suffix'))]"
+        "name_clusterName": "[if(parameters('createCluster'), concat('cluster', parameters('guidSuffix')), parameters('clusterName'))]",
+        "name_clusterVNetName": "[concat('vnet', parameters('guidSuffix'))]",
+        "name_deploymentScriptName": "[concat('script', parameters('guidSuffix'))]"
     },
     "resources": [
         {

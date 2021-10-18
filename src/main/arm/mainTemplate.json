@@ -169,7 +169,7 @@
         },
         "guidValue": {
             "defaultValue": "[newGuid()]",
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "The value returned from function newGuid()"
             }
@@ -177,8 +177,9 @@
     },
     "variables": {
         "const_currentSubscription": "[subscription().subscriptionId]",
-        "name_aroTemplate": "aroTemplate",
-        "name_spTemplate": "spTemplate"
+        "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
+        "name_aroTemplate": "[concat('aroTemplate', variables('const_suffix'))]",
+        "name_spTemplate": "[concat('spTemplate', variables('const_suffix'))]"
     },
     "resources": [
         {
@@ -247,8 +248,8 @@
                     "rpObjectId": {
                         "value": "[parameters('rpObjectId')]"
                     },
-                    "guidValue": {
-                        "value": "[parameters('guidValue')]"
+                    "guidSuffix": {
+                        "value": "[variables('const_suffix')]"
                     }
                 }
             }
@@ -353,8 +354,8 @@
                     "appReplicas": {
                         "value": "[parameters('appReplicas')]"
                     },
-                    "guidValue": {
-                        "value": "[parameters('guidValue')]"
+                    "guidSuffix": {
+                        "value": "[variables('const_suffix')]"
                     }
                 }
             }

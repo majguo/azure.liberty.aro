@@ -56,10 +56,10 @@
                 "description": "The Object ID of the Resource Provider Service Principal"
             }
         },
-        "guidValue": {
+        "guidSuffix": {
             "type": "string",
             "metadata": {
-                "description": "The value returned from function newGuid()"
+                "description": "The suffix of GUID"
             }
         }
     },
@@ -70,9 +70,8 @@
         "const_nullValue": "NULL",
         "const_rpObjectIdKey": "RP-OBJECT-ID",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
-        "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
-        "name_keyVault": "[concat('keyvault', variables('const_suffix'))]",
-        "name_spDeploymentScript": "[concat('spScript', variables('const_suffix'))]"
+        "name_keyVault": "[concat('keyvault', parameters('guidSuffix'))]",
+        "name_spDeploymentScript": "[concat('spScript', parameters('guidSuffix'))]"
     },
     "resources": [
         {
