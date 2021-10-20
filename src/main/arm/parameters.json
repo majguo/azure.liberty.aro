@@ -27,21 +27,6 @@
         },
         "projMgrPassword": {
             "value": "${projMgrPassword}"
-        },
-        "uploadAppPackage": {
-            "value": "${uploadAppPackage}"
-        },
-        "contextRoot": {
-            "value": "${contextRoot}"
-        },
-        "useOpenLibertyImage": {
-            "value": "${useOpenLibertyImage}"
-        },
-        "useJava8": {
-            "value": "${useJava8}"
-        },
-        "appReplicas": {
-            "value": "${appReplicas}"
         }
     }
 }
