@@ -21,8 +21,8 @@ on:
   # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "package"}'
 env:
   repoName: "azure.liberty.aro"
-  offerId: "20210823-liberty-aro"
-  planId: "liberty-aro"
+  offerId: "20191212-arm-rhel-was-nd-v9-cluster"
+  planId: "azure-liberty-aro"
   clientId: ${{ secrets.CLIENT_ID }}
   secretValue: ${{ secrets.SECRET_VALUE }}
   tenantId: ${{ secrets.TENANT_ID }}
